@@ -360,6 +360,8 @@ router.post('/3',async function(req, res, next){
     })
     .catch((error) => {
       logger.error('#server.routes.start.post.3: Database error %s', error);
+      req.flash('danger', 'We have an internal issue. Contact our support.');
+      res.redirect("/");
     });
   
   
