@@ -173,7 +173,7 @@ router.post('/1',function(req, res, next){
     
     res.render('tweet', {
       title: 'Step 2',
-      tweet: 'I get access to storage IPFS cloud and minting NFT using the $ETHO faucet. Redundant, safe, distributed and censor resistant @ethoprotocol. \n\nStore data: upload.ethoprotocol.com\nMInt NFT: ethonft.com\n',
+      tweet: 'I get access to storage IPFS cloud and minting NFT using the $ETHO faucet. Redundant, safe, distributed and censor resistant @ethoprotocol. \n\nStore data: uploads.ethoprotocol.com\nMInt NFT: ethonft.com\n',
       ethoaddr: req.body.ethoaddr,
       tweetid: ""
     });
