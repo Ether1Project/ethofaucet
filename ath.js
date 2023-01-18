@@ -278,10 +278,8 @@ exports.athdoTransfer= function(currency, fromaddress, depositaddr, depositamoun
     
                   await wb3.eth.sendSignedTransaction(signedTx.rawTransaction, function(error, hash) {
                       if (!error) {
-                          console.log("🎉 The hash of your transaction is: ", hash, "\n Check Alchemy's Mempool to view the status of your transaction!");
                           resolve(hash);
                       } else {
-                          console.log("❗Something went wrong while submitting your transaction:", error);
                           reject("Can't send transaction: " + error);
                       }
                   });

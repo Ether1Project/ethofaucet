@@ -6,7 +6,7 @@ const {athGetBalance, athIsAddress} = require("../ath");
 var router = express.Router();
 
 const needle = require('needle');
-const tweettext='I get access to storage IPFS cloud and minting NFT using the $ETHO faucet. Redundant, safe, distributed and censor resistant @ethoprotocol. \n\nStore data: upload.ethoprotocol.com\nMInt NFT: ethonft.com\n';
+const tweettext='I get access to storage IPFS cloud and minting NFT using the $ETHO faucet. Redundant, safe, distributed and censor resistant @ethoprotocol. \n\nStore data: uploads.ethoprotocol.com\nMInt NFT: ethonft.com\n';
 const tweettextlen=120;
 
 async function validate_twittername(tweetid){
@@ -218,7 +218,6 @@ router.post('/2',async function(req, res, next){
     })
     .catch(function(error) {
       logger.info("#server.routes.start.post.2: Wrong twitter name: ",req.body.tweetid);
-      console.log(error);
       req.flash('danger', 'The Twittername \"' + req.body.tweetid + '\" provided is not correct. Make sure it is valid.');
       res.render('tweet', {
         title: 'Step 2',
@@ -265,28 +264,20 @@ router.post('/3',async function(req, res, next){
               }
               await validate_search(req.body.tweetid)
                 .then(function (response) {
-                  console.dir(response, {
-                    depth: null
-                  });
                   let i=0;
                   // check all tweets with 7 days retention
                   if (response.meta.result_count != 0) {
-                    console.log("we see tweets");
                     // We could find a tweets mentioning @ethoprotocol, so let us check further
                     for (i = 0; i < response.data.length; i++) {
-                      console.log(response.data[i].text.substring(0, tweettextlen));
-                      console.log(tweettext);
                       
                       if (response.data[i].text.substring(0, tweettextlen) == tweettext.substring(0, tweettextlen)) {
-                        console.log("found");
                         break;
                       }
                     }
-                    console.log(response.data.length);
                     if (i < response.data.length) {
                       // So we found a tweet
                       // if we have come here we transfer funds
-                      crypto.athdoTransfer(config.FAUCET_CURRENCY, config.FAUCET_ADDR, req.body.ethoaddr, "0.01").then((response) => {
+                      crypto.athdoTransfer(config.FAUCET_CURRENCY, config.FAUCET_ADDR, req.body.ethoaddr, config.FAUCET_AMOUNT).then((response) => {
                         logger.info("#server.routes.start.post.3: Success %s", response);
                         sql = "INSERT INTO tweet (screenname, tweettime) VALUES (" +
                           pool.escape(req.body.tweetid) + ", '" +

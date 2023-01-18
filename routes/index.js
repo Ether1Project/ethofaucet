@@ -28,13 +28,6 @@ router.get('/', async function(req, res, next) {
   });
 });
 
-router.get('/termsofservice', async function(req, res, next) {
-  
-  res.render('termsofservice', {
-    title: 'Faucet - Terms of service',
-  });
-});
-
 
 
 module.exports = router;
