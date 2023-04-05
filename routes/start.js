@@ -184,7 +184,6 @@ router.post('/1',function(req, res, next){
 
 router.post('/2',async function(req, res, next){
   logger.info("#server.routes.start.post.2: %s", req.body.ethoaddr);
-  logger.info("#server.routes.start.post.2: %s",req.body.id);
   logger.info("#server.routes.start.post.2: %s",req.body.tweetid);
   
   
@@ -221,7 +220,7 @@ router.post('/2',async function(req, res, next){
       req.flash('danger', 'The Twittername \"' + req.body.tweetid + '\" provided is not correct. Make sure it is valid.');
       res.render('tweet', {
         title: 'Step 2',
-        tweet: 'I get access to storage IPFS cloud and minting NFT using the $ETHO faucet. Redundant, safe, distributed and censor resistant @ethoprotocol. \n\nStore data: upload.ethoprotocol.com\nMInt NFT: ethonft.com\n'+ req.body.id,
+        tweet: 'I get access to storage IPFS cloud and minting NFT using the $ETHO faucet. Redundant, safe, distributed and censor resistant @ethoprotocol. \n\nStore data: upload.ethoprotocol.com\nMInt NFT: ethonft.com\n',
         ethoaddr: req.body.ethoaddr,
         tweetid: req.body.tweetid
       });
@@ -229,7 +228,6 @@ router.post('/2',async function(req, res, next){
 });
 
 router.post('/3',async function(req, res, next){
-  logger.info("#server.routes.start.post.3: %s",req.body.id);
   logger.info("#server.routes.start.post.3: %s",req.body.ethoaddr);
   logger.info("#server.routes.start.post.3: %s",req.body.tweetid);
   let explore;

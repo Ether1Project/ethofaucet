@@ -18,7 +18,7 @@ block content
                                 p.card-text.text-dark.p-2
                                     form(method='POST', action='/start/1')
                                         .form-group
-                                            input#inputETHO.form-control(name="ethoaddr", value=`${address}`)
+                                            input#inputETHO.form-control(name="ethoaddr", aria-label="0x...", value=`${address}`)
                                         .d-grid.gap-2.d-md-flex-justify-content-md-end
                                             button#submitbtn.btn.btn-primary(type="submit") Confirm your ETHO address
 
