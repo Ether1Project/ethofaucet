@@ -1,2 +1,2 @@
 # ethofaucet
-Etho social faucet
+This Etho social faucet combines the faucet functionality with twitter.
