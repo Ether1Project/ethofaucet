@@ -187,7 +187,17 @@ router.post('/2',async function(req, res, next){
   logger.info("#server.routes.start.post.2: %s",req.body.tweetid);
   
   
-  await validate_twittername(req.body.tweetid)
+      req.flash('success', 'Your Tweetname \"' + req.body.tweetid + '\" is valid.');
+      
+      res.render('like', {
+        title: 'Step 3',
+        tweetid: req.body.tweetid,
+        ethoaddr: req.body.ethoaddr,
+        follow: true
+            });
+  
+  /*
+    await validate_twittername(req.body.tweetid)
     .then(function (response) {
       req.flash('success', 'Your Tweetname \"' + req.body.tweetid + '\" is valid.');
       
@@ -225,6 +235,8 @@ router.post('/2',async function(req, res, next){
         tweetid: req.body.tweetid
       });
     })
+  
+   */
 });
 
 router.post('/3',async function(req, res, next){
@@ -246,6 +258,51 @@ router.post('/3',async function(req, res, next){
       if (userrows.length == 0) {
         logger.info("#server.routes.start.post.3: Great.User not found %s", req.body.tweetid);
         // No entry: a new user
+        // Let us check the other conditions before entering him
+        // We check again if the user follow us
+              let explore;
+          
+              if (config.FAUCET_CURRENCY == "ETHO") {
+                explore = "https://explorer.ethoprotocol.com";
+              } else {
+                explore = "https://testnetexplorer.ethoprotocol.com";
+              }
+                      // So we found a tweet
+                      // if we have come here we transfer funds
+                      crypto.athdoTransfer(config.FAUCET_CURRENCY, config.FAUCET_ADDR, req.body.ethoaddr, config.FAUCET_AMOUNT).then((response) => {
+                        logger.info("#server.routes.start.post.3: Success %s", response);
+                        sql = "INSERT INTO tweet (screenname, tweettime) VALUES (" +
+                          pool.escape(req.body.tweetid) + ", '" +
+                          pool.mysqlNow() +
+                          "')";
+                        pool.query(sql)
+                          .then(() => {
+                            // Finalize
+                            explore = explore + "/tx/" + response;
+                            res.render('transfer', {
+                              title: 'Validation',
+                              ethoaddr: req.body.ethoaddr,
+                              tweetid: req.body.tweetid,
+                              explorerurl: explore,
+                              tx: response
+                            });
+                          })
+                          .catch((error) => {
+                            logger.error("#server.routes.start.post.3: Error %s", error);
+                            req.flash('danger', 'Database issue. please contact our support');
+                            res.redirect("/");
+                          })
+  
+                      })
+                        .catch((error) => {
+                          logger.error("#server.routes.start.post.3: Error %s", error);
+                          req.flash('danger', 'Issue when transfering funds. Please contact support');
+                          res.redirect("/");
+                        })
+    
+    
+
+/*
         // Let us check the other conditions before entering him
         // We check again if the user follow us
         validate_followship(req.body.tweetid)
@@ -347,7 +404,8 @@ router.post('/3',async function(req, res, next){
           .catch(function (error) {
             logger.error("#server.routes.start.post.3: Can not determine followship: %s", error);
           })
-    
+        
+ */
     
       } else {
         logger.info("#server.routes.start.post.3: User got faucet already: %s", req.body.tweetid);
