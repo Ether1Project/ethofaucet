@@ -186,69 +186,63 @@ router.post('/2',async function(req, res, next){
   logger.info("#server.routes.start.post.2: %s", req.body.ethoaddr);
   logger.info("#server.routes.start.post.2: %s",req.body.tweetid);
   
-  
-      req.flash('success', 'Your Tweetname \"' + req.body.tweetid + '\" is valid.');
-      
-      res.render('like', {
-        title: 'Step 3',
-        tweetid: req.body.tweetid,
-        ethoaddr: req.body.ethoaddr,
-        follow: true
-            });
-  
-  /*
-    await validate_twittername(req.body.tweetid)
-    .then(function (response) {
-      req.flash('success', 'Your Tweetname \"' + req.body.tweetid + '\" is valid.');
-      
-      // Now let's check if we are friends already in that case we can jump the next step
-      validate_followship(req.body.tweetid)
-        .then(function (response) {
-          if(response.relationship.target.following) {
-            // We will check now if there is a recent tweet with the body id if so we will skip following
-            res.render('like', {
-              title: 'Step 3',
-              tweetid: req.body.tweetid,
-              ethoaddr: req.body.ethoaddr,
-              follow: true
-            });
-          } else {
-            res.render('like', {
-              title: 'Step 3',
-              tweetid: req.body.tweetid,
-              ethoaddr: req.body.ethoaddr,
-              follow: false
-            });
-          }
-        })
-        .catch(function(error) {
-          logger.error("#server.routes.start.post.2: Can not determine followship: %s", error);
-        })
-    })
-    .catch(function(error) {
-      logger.info("#server.routes.start.post.2: Wrong twitter name: ",req.body.tweetid);
-      req.flash('danger', 'The Twittername \"' + req.body.tweetid + '\" provided is not correct. Make sure it is valid.');
-      res.render('tweet', {
-        title: 'Step 2',
-        tweet: 'I get access to storage IPFS cloud and minting NFT using the $ETHO faucet. Redundant, safe, distributed and censor resistant @ethoprotocol. \n\nStore data: upload.ethoprotocol.com\nMInt NFT: ethonft.com\n',
-        ethoaddr: req.body.ethoaddr,
-        tweetid: req.body.tweetid
-      });
-    })
-  
-   */
+  if (req.body.tweetid=="") {
+    req.flash('danger', 'Your Tweetname is invalid.');
+    res.redirect('/');
+  } else {
+    
+      await validate_twittername(req.body.tweetid)
+      .then(function (response) {
+        req.flash('success', 'Your Tweetname \"' + req.body.tweetid + '\" is valid.');
+        
+        // Now let's check if we are friends already in that case we can jump the next step
+        validate_followship(req.body.tweetid)
+          .then(function (response) {
+            if(response.relationship.target.following) {
+              // We will check now if there is a recent tweet with the body id if so we will skip following
+              res.render('like', {
+                title: 'Step 3',
+                tweetid: req.body.tweetid,
+                ethoaddr: req.body.ethoaddr,
+                follow: true
+              });
+            } else {
+              res.render('like', {
+                title: 'Step 3',
+                tweetid: req.body.tweetid,
+                ethoaddr: req.body.ethoaddr,
+                follow: false
+              });
+            }
+          })
+          .catch(function(error) {
+            logger.error("#server.routes.start.post.2: Can not determine followship: %s", error);
+          })
+      })
+      .catch(function(error) {
+        logger.info("#server.routes.start.post.2: Wrong twitter name: ",req.body.tweetid);
+        req.flash('danger', 'The Twittername \"' + req.body.tweetid + '\" provided is not correct. Make sure it is valid.');
+        res.render('tweet', {
+          title: 'Step 2',
+          tweet: 'I get access to storage IPFS cloud and minting NFT using the $ETHO faucet. Redundant, safe, distributed and censor resistant @ethoprotocol. \n\nStore data: upload.ethoprotocol.com\nMInt NFT: ethonft.com\n',
+          ethoaddr: req.body.ethoaddr,
+          tweetid: req.body.tweetid
+        });
+      })
+  }
 });
 
-router.post('/3',async function(req, res, next){
-  logger.info("#server.routes.start.post.3: %s",req.body.ethoaddr);
-  logger.info("#server.routes.start.post.3: %s",req.body.tweetid);
+router.post('/3',async function(req, res, next) {
+  logger.info("#server.routes.start.post.3: Etho Address %s", req.body.ethoaddr);
+  logger.info("#server.routes.start.post.3: TweetID %s", req.body.tweetid);
+  logger.info("#server.routes.start.post.3: IP %s", req.ip);
   let explore;
   let sql;
   
-  if (config.FAUCET_CURRENCY=="ETHO") {
-    explore="https://explorer.ethoprotocol.com";
+  if (config.FAUCET_CURRENCY == "ETHO") {
+    explore = "https://explorer.ethoprotocol.com";
   } else {
-    explore="https://testnetexplorer.ethoprotocol.com";
+    explore = "https://testnetexplorer.ethoprotocol.com";
   }
   
   // First we check if the user has been here
@@ -257,161 +251,179 @@ router.post('/3',async function(req, res, next){
     .then((userrows) => {
       if (userrows.length == 0) {
         logger.info("#server.routes.start.post.3: Great.User not found %s", req.body.tweetid);
-        // No entry: a new user
-        // Let us check the other conditions before entering him
-        // We check again if the user follow us
+        // Check also if the address has been already used
+        sql = "SELECT * FROM tweet WHERE account = " + pool.escape(req.body.ethoaddr);
+        pool.query(sql)
+          .then((userrows) => {
+            if (userrows.length == 0) {
+              logger.info("#server.routes.start.post.3: Great. Address not found %s", req.body.tweetid);
+              
+              
+              // No entry: a new user
+              // Let us check the other conditions before entering him
+              // We check again if the user follow us
               let explore;
-          
+              
               if (config.FAUCET_CURRENCY == "ETHO") {
                 explore = "https://explorer.ethoprotocol.com";
               } else {
                 explore = "https://testnetexplorer.ethoprotocol.com";
               }
-                      // So we found a tweet
-                      // if we have come here we transfer funds
-                      crypto.athdoTransfer(config.FAUCET_CURRENCY, config.FAUCET_ADDR, req.body.ethoaddr, config.FAUCET_AMOUNT).then((response) => {
-                        logger.info("#server.routes.start.post.3: Success %s", response);
-                        sql = "INSERT INTO tweet (screenname, tweettime) VALUES (" +
-                          pool.escape(req.body.tweetid) + ", '" +
-                          pool.mysqlNow() +
-                          "')";
-                        pool.query(sql)
-                          .then(() => {
-                            // Finalize
-                            explore = explore + "/tx/" + response;
-                            res.render('transfer', {
-                              title: 'Validation',
-                              ethoaddr: req.body.ethoaddr,
-                              tweetid: req.body.tweetid,
-                              explorerurl: explore,
-                              tx: response
-                            });
-                          })
-                          .catch((error) => {
-                            logger.error("#server.routes.start.post.3: Error %s", error);
-                            req.flash('danger', 'Database issue. please contact our support');
-                            res.redirect("/");
-                          })
-  
-                      })
-                        .catch((error) => {
-                          logger.error("#server.routes.start.post.3: Error %s", error);
-                          req.flash('danger', 'Issue when transfering funds. Please contact support');
-                          res.redirect("/");
-                        })
-    
-    
-
-/*
-        // Let us check the other conditions before entering him
-        // We check again if the user follow us
-        validate_followship(req.body.tweetid)
-          .then(async function (response) {
-            if (response.relationship.target.following) {
-              req.flash('success', 'You liked us already, that is great. So let us finish things up...');
-              // We will check now if there is a recent tweet with the body id if so we will transfer funds to the address
-              let explore;
-          
-              if (config.FAUCET_CURRENCY == "ETHO") {
-                explore = "https://explorer.ethoprotocol.com";
-              } else {
-                explore = "https://testnetexplorer.ethoprotocol.com";
-              }
-              await validate_search(req.body.tweetid)
-                .then(function (response) {
-                  let i=0;
-                  // check all tweets with 7 days retention
-                  if (response.meta.result_count != 0) {
-                    // We could find a tweets mentioning @ethoprotocol, so let us check further
-                    for (i = 0; i < response.data.length; i++) {
-                      
-                      if (response.data[i].text.substring(0, tweettextlen) == tweettext.substring(0, tweettextlen)) {
-                        break;
-                      }
-                    }
-                    if (i < response.data.length) {
-                      // So we found a tweet
-                      // if we have come here we transfer funds
-                      crypto.athdoTransfer(config.FAUCET_CURRENCY, config.FAUCET_ADDR, req.body.ethoaddr, config.FAUCET_AMOUNT).then((response) => {
-                        logger.info("#server.routes.start.post.3: Success %s", response);
-                        sql = "INSERT INTO tweet (screenname, tweettime) VALUES (" +
-                          pool.escape(req.body.tweetid) + ", '" +
-                          pool.mysqlNow() +
-                          "')";
-                        pool.query(sql)
-                          .then(() => {
-                            // Finalize
-                            explore = explore + "/tx/" + response;
-                            res.render('transfer', {
-                              title: 'Validation',
-                              ethoaddr: req.body.ethoaddr,
-                              tweetid: req.body.tweetid,
-                              explorerurl: explore,
-                              tx: response
-                            });
-                          })
-                          .catch((error) => {
-                            logger.error("#server.routes.start.post.3: Error %s", error);
-                            req.flash('danger', 'Database issue. please contact our support');
-                            res.redirect("/");
-                          })
-  
-                      })
-                        .catch((error) => {
-                          logger.error("#server.routes.start.post.3: Error %s", error);
-                          req.flash('danger', 'Issue when transfering funds. Please contact support');
-                          res.redirect("/");
-                        })
-    
-    
+              
+              // Let us check the other conditions before entering him
+              // We check again if the user follow us
+              validate_followship(req.body.tweetid)
+                .then(async function (response) {
+                  if (response.relationship.target.following) {
+                    req.flash('success', 'You liked us already, that is great. So let us finish things up...');
+                    // We will check now if there is a recent tweet with the body id if so we will transfer funds to the address
+                    let explore;
+                    
+                    if (config.FAUCET_CURRENCY == "ETHO") {
+                      explore = "https://explorer.ethoprotocol.com";
                     } else {
-                      logger.info("#server.routes.start.post.3: You seem not to have sent the tweet.");
-                      req.flash('danger', 'The tweet cannot be found. Please make sure you sent the tweet unchanged.');
-                      res.render('tweet', {
-                        title: 'Step 2',
-                        tweet: tweettext,
-                        ethoaddr: req.body.ethoaddr,
-                        tweetid: req.body.tweetid
-                      });
+                      explore = "https://testnetexplorer.ethoprotocol.com";
                     }
+                    crypto.athdoTransfer(config.FAUCET_CURRENCY, config.FAUCET_ADDR, req.body.ethoaddr, config.FAUCET_AMOUNT)
+                      .then((response) => {
+                        logger.info("#server.routes.start.post.3: Success %s", response);
+                        sql = "INSERT INTO tweet (screenname, tweettime, account, ip) VALUES (" +
+                          pool.escape(req.body.tweetid) + ", '" +
+                          pool.mysqlNow() + "', '" +
+                          req.body.ethoaddr + "', '" +
+                          req.ip +
+                          "')";
+                        pool.query(sql)
+                          .then(() => {
+                            // Finalize
+                            explore = explore + "/tx/" + response;
+                            res.render('transfer', {
+                              title: 'Validation',
+                              ethoaddr: req.body.ethoaddr,
+                              tweetid: req.body.tweetid,
+                              explorerurl: explore,
+                              tx: response
+                            });
+                          })
+                          .catch((error) => {
+                            logger.error("#server.routes.start.post.3: Error %s", error);
+                            req.flash('danger', 'Database issue. please contact our support');
+                            res.redirect("/");
+                          })
+                        
+                      })
+                      .catch((error) => {
+                        logger.error("#server.routes.start.post.3: Error %s", error);
+                        req.flash('danger', 'Issue when transfering funds. Please contact support');
+                        res.redirect("/");
+                      })
+                    
+                    
+                    /*
+                                        await validate_search(req.body.tweetid)
+                                          .then(function (response) {
+                                            let i = 0;
+                                            console.log(response);
+                                            // check all tweets with 7 days retention
+                                            if (response.meta.result_count != 0) {
+                                              // We could find a tweets mentioning @ethoprotocol, so let us check further
+                                              for (i = 0; i < response.data.length; i++) {
+                                    
+                                                if (response.data[i].text.substring(0, tweettextlen) == tweettext.substring(0, tweettextlen)) {
+                                                  break;
+                                                }
+                                              }
+                                              if (i < response.data.length) {
+                                                // So we found a tweet
+                                                // if we have come here we transfer funds
+                                                crypto.athdoTransfer(config.FAUCET_CURRENCY, config.FAUCET_ADDR, req.body.ethoaddr, config.FAUCET_AMOUNT).then((response) => {
+                                                  logger.info("#server.routes.start.post.3: Success %s", response);
+                                                  sql = "INSERT INTO tweet (screenname, tweettime, account, ip) VALUES (" +
+                                                    pool.escape(req.body.tweetid) + ", '" +
+                                                    pool.mysqlNow() + "', '" +
+                                                    req.body.ethoaddr + "', '" +
+                                                    req.ip +
+                                                    "')";
+                                                  pool.query(sql)
+                                                    .then(() => {
+                                                      // Finalize
+                                                      explore = explore + "/tx/" + response;
+                                                      res.render('transfer', {
+                                                        title: 'Validation',
+                                                        ethoaddr: req.body.ethoaddr,
+                                                        tweetid: req.body.tweetid,
+                                                        explorerurl: explore,
+                                                        tx: response
+                                                      });
+                                                    })
+                                                    .catch((error) => {
+                                                      logger.error("#server.routes.start.post.3: Error %s", error);
+                                                      req.flash('danger', 'Database issue. please contact our support');
+                                                      res.redirect("/");
+                                                    })
+                                      
+                                                })
+                                                  .catch((error) => {
+                                                    logger.error("#server.routes.start.post.3: Error %s", error);
+                                                    req.flash('danger', 'Issue when transfering funds. Please contact support');
+                                                    res.redirect("/");
+                                                  })
+                                    
+                                    
+                                              } else {
+                                                logger.info("#server.routes.start.post.3: You seem not to have sent the tweet.");
+                                                req.flash('danger', 'The tweet cannot be found. Please make sure you sent the tweet unchanged.');
+                                                res.render('tweet', {
+                                                  title: 'Step 2',
+                                                  tweet: tweettext,
+                                                  ethoaddr: req.body.ethoaddr,
+                                                  tweetid: req.body.tweetid
+                                                });
+                                              }
+                                            } else {
+                                              logger.info("#server.routes.start.post.3: You seem not to have sent the tweet.");
+                                              req.flash('danger', 'The tweet cannot be found. Please make sure you sent the tweet unchanged.');
+                                              res.render('tweet', {
+                                                title: 'Step 2',
+                                                tweet: tweettext,
+                                                ethoaddr: req.body.ethoaddr,
+                                                tweetid: req.body.tweetid
+                                              });
+                                            }
+                                          })
+                                          .catch(function (error) {
+                                            logger.info("#server.routes.start.post.3: Tweet issue: %s", error);
+                                            req.flash('danger', 'The tweet cannot be found. Please contact support.');
+                                            res.redirect("/");
+                                          })
+                    */
                   } else {
-                    logger.info("#server.routes.start.post.3: You seem not to have sent the tweet.");
-                    req.flash('danger', 'The tweet cannot be found. Please make sure you sent the tweet unchanged.');
-                    res.render('tweet', {
-                      title: 'Step 2',
+                    req.flash('danger', 'Please follow us to claim ETHO.');
+                    res.render('like', {
+                      title: 'Step 3',
                       tweet: tweettext,
-                      ethoaddr: req.body.ethoaddr,
-                      tweetid: req.body.tweetid
+                      tweetid: req.body.tweetid,
+                      ethoaddr: req.body.ethoaddr
                     });
                   }
                 })
                 .catch(function (error) {
-                  logger.info("#server.routes.start.post.3: Tweet issue: %s", error);
-                  req.flash('danger', 'The tweet cannot be found. Please contact support.');
-                  res.redirect("/");
+                  logger.error("#server.routes.start.post.3: Can not determine followship: %s", error);
                 })
-  
+              
+              
             } else {
-              req.flash('danger', 'Please follow us to claim ETHO.');
-              res.render('like', {
-                title: 'Step 3',
-                tweet: tweettext,
-                tweetid: req.body.tweetid,
-                ethoaddr: req.body.ethoaddr
-              });
+              logger.info("#server.routes.start.post.3: Address already used: %s", req.body.ethoaddr);
+              req.flash('danger', 'You already used the faucet.');
+              res.redirect("/");
             }
           })
-          .catch(function (error) {
-            logger.error("#server.routes.start.post.3: Can not determine followship: %s", error);
-          })
         
- */
-    
       } else {
         logger.info("#server.routes.start.post.3: User got faucet already: %s", req.body.tweetid);
         req.flash('danger', 'You already used the faucet.');
         res.redirect("/");
-  
+        
       }
     })
     .catch((error) => {
@@ -419,7 +431,6 @@ router.post('/3',async function(req, res, next){
       req.flash('danger', 'We have an internal issue. Contact our support.');
       res.redirect("/");
     });
-  
   
   
 });
